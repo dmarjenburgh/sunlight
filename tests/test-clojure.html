@@ -8,7 +8,7 @@
 
 	<body>
 <pre id="code" class="sunlight-highlight-clojure">;;; Convert roman to arabic numerals
-(defn roman->arabic [rom]
+(defn roman-&gt;arabic [rom]
   (let [dict {"I" 1 "IV" 4 "V" 5 "IX" 9 "X" 10 "XL" 40 "L" 50
               "XC" 90 "C" 100 "CD" 400 "D" 500 "CM" 900 "M" 1000}]
     (loop [rom rom acc 0]
@@ -19,6 +19,7 @@
 ; Tagged literals
 (def ^:private my-birthdate #inst "1981-02-16T7:30:00")
 
+; keyword ending in non-js word character
 (defn- divisible-by? [d n]
   (zero? (rem n d)))
 
@@ -28,9 +29,11 @@
     (vec
       (for [n1 letters n2 letters n3 letters n4 letters]
         (str n1 n2 n3 n4)))))
-[\space \backspace \tab]
 
-(reduce +' [40 23.67 -45.23 4523N 123.45678M])
+;; user=&gt; char-name-string
+{\space "space", \backspace "backspace", \tab "tab", \newline "newline", \formfeed "formfeed", \return "return"}
+
+(reduce +' [40 -96 23.67 -45.23 4523N -524N 123.45678M -23.1241M])
 
 ; https://github.com/LightTable/LightTable/blob/master/src/lt/plugins/doc.cljs
 (ns lt.plugins.doc
@@ -92,7 +95,7 @@
               :desc "Docs: Toggle documentation at cursor"
               :exec (fn []
                       (when-let [ed (pool/last-active)]
-                        (let [loc (editor/->cursor ed)]
+                        (let [loc (editor/-&gt;cursor ed)]
                           (if-let [cur (doc-on-line? ed (:line loc))]
                             (remove! ed cur)
                             (object/raise ed :editor.doc)
@@ -159,15 +162,15 @@
     (if-not (seq cs)
       (object/raise this :no-client)
       (do
-        (when-let [nc (dom/$ :.no-client (object/->content this))]
+        (when-let [nc (dom/$ :.no-client (object/-&gt;content this))]
           (dom/remove nc))
         (notifos/set-msg! "Searching for docs...")
         (doseq [c cs]
           (notifos/working)
           (clients/send c (:trigger cur) {:search v} :only this))))))
 
-(defn ->val [this]
-  (dom/val (dom/$ :.search (object/->content this))))
+(defn -&gt;val [this]
+  (dom/val (dom/$ :.search (object/-&gt;content this))))
 
 (defn grouped-items [results v prev]
   (let [normal (dom/fragment [])
@@ -185,28 +188,28 @@
           :reaction (fn [this i]
                       (object/merge! this {:cur i})
                       (object/raise this :clear!)
-                      (dom/replace-with (dom/$ :.types (object/->content this)) (type-list this))
+                      (dom/replace-with (dom/$ :.types (object/-&gt;content this)) (type-list this))
                       (object/raise this :focus!)))
 
 (behavior ::clear!
           :triggers #{:clear!}
           :reaction (fn [this]
-                      (dom/empty (dom/$ :.results (object/->content this)))
+                      (dom/empty (dom/$ :.results (object/-&gt;content this)))
                       (object/merge! this {:results #{}})))
 
 (behavior ::no-client
           :triggers #{:no-client}
           :reaction (fn [this]
-                      (when-not (dom/$ :.no-client (object/->content this))
-                        (dom/before (dom/$ :.results (object/->content this)) (no-client-ui this)))))
+                      (when-not (dom/$ :.no-client (object/-&gt;content this))
+                        (dom/before (dom/$ :.results (object/-&gt;content this)) (no-client-ui this)))))
 
 (behavior ::cur-from-last-editor
           :triggers #{:show}
           :reaction (fn [this]
                       (when-let [ed (pool/last-active)]
-                        (let [ed-type (-> @ed :info :type-name)]
-                          (when-not (-> @this :cur :file-types (get ed-type))
-                            (when-let [neue (first (filter #(-> % :file-types (get ed-type))
+                        (let [ed-type (-&gt; @ed :info :type-name)]
+                          (when-not (-&gt; @this :cur :file-types (get ed-type))
+                            (when-let [neue (first (filter #(-&gt; % :file-types (get ed-type))
                                                            (object/raise-reduce this :types+ [])))]
                               (object/raise this :set-item! neue)
                               ))))))
@@ -214,8 +217,8 @@
 (behavior ::sidebar.doc.search.exec
           :triggers #{:sidebar.doc.search.exec}
           :reaction (fn [this]
-                      (let [v (->val this)
-                            trigger (-> @this :cur :trigger)]
+                      (let [v (-&gt;val this)
+                            trigger (-&gt; @this :cur :trigger)]
                         (object/raise this :clear!)
                         (when-not (empty? v)
                           (if (fn? trigger)
@@ -225,9 +228,9 @@
 (behavior ::doc.search.results
           :triggers #{:doc.search.results}
           :reaction (fn [this results]
-                      (let [v (->val this)
+                      (let [v (-&gt;val this)
                             {:keys [normal exact]} (grouped-items results v (:results @this))
-                            old (dom/$ :.results (object/->content this))]
+                            old (dom/$ :.results (object/-&gt;content this))]
                         (object/merge! this {:results (into (:results @this) results)})
                         (notifos/done-working (str "Found " (count (:results @this)) " doc results."))
                         (dom/prepend old exact)
@@ -236,7 +239,7 @@
 (behavior ::focus!
           :triggers #{:focus!}
           :reaction (fn [this]
-                      (dom/focus (dom/$ :input (object/->content this)))))
+                      (dom/focus (dom/$ :input (object/-&gt;content this)))))
 
 (object/object* ::sidebar.doc.search
                 :tags #{:sidebar.docs.search}
@@ -304,27 +307,28 @@
     assertExists("ident", "dict", "user defined symbol: dict");
     assertExists("ident", "rom", "user defined symbol: rom");
     assertExists("ident", "acc", "user defined symbol: acc");
-    
+
     assertExists("named-ident", "if-let", "core function");
     assertExists("named-ident", "re-find", "core function");
     assertExists("named-ident", "zero?", "core function");
     assertExists("named-ident", "for", "core function");
-    
+
     assertExists("keyword", "def", "special form: def");
     assertExists("keyword", "defn", "special form: defn");
-    //assertExists("keyword", "defn-", "special form: defn-");
+    assertExists("keyword", "defn-", "special form: defn-");
 
     assertExists("char", "\\A", "character");
     assertExists("char", "\\space", "character");
     assertExists("char", "\\tab", "character");
 
-    assertExists("number", "40", "integer");
-    assertExists("number", "23.67", "double");
+    assertExists("number", "40", "positive integer");
+    assertExists("number", "-96", "negative integer");
+    assertExists("number", "23.67", "positive double");
     assertExists("number", "-45.23", "negative double");
-    assertExists("number", "4523N", "bigint");
-    assertExists("number", "123.45678M", "bigdec");
-
-
+    assertExists("number", "4523N", "positive bigint");
+    assertExists("number", "-524", "negative bigint");
+    assertExists("number", "123.45678M", "positive bigdec");
+    assertExists("number", "23.1241M", "negative bigdec");
 
 		assertExists("comment", "; https://github.com/LightTable/LightTable/blob/master/src/lt/plugins/doc.cljs", "single line comment");
 
