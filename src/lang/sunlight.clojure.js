@@ -18,6 +18,7 @@
     // constants
     "EMPTY_NODE", "char-escape-string", "default-data-readers", "char-name-string", "primitives-classnames"
   ];
+  var charNameStrings = ["\\space", "\\backspace", "\\tab", "\\newline", "\\formfeed", "\\return"];
   var coreForms = [
     // general functions
     "sorted-map", "read-line", "re-pattern", "unchecked-inc-int", "val", "find-protocol-impl",
@@ -94,26 +95,9 @@
   sunlight.registerLanguage("clojure", {
     keywords: specialForms,
     scopes: {
-      string: [
-        [
-          "\"",
-          "\"",
-          ["\\\""]
-        ]
-      ],
-      comment: [
-        [
-          ";",
-          "\n"
-        ]
-      ],
-      regex: [
-        [
-          "#\"",
-          "\"",
-          ["\\\""]
-        ]
-      ]
+      string: [ [ "\"", "\"", ["\\\""] ] ],
+      comment: [ [ ";", "\n", null, true] ],
+      regex: [ [ "#\"", "\"", ["\\\""] ] ]
     },
 
     identFirstLetter: /[a-zA-Z\*\+\-\!\?_]/,
@@ -143,7 +127,6 @@
         if (context.reader.current() !== "\\") {
           return null;
         }
-        var charNameStrings = ["\\space", "\\backspace", "\\tab", "\\newline", "\\formfeed", "\\return"];
         var map = sunlight.util.createHashMap(charNameStrings, "\\b", false);
         var tok = sunlight.util.matchWord(context, map, "char", false);
 
@@ -165,8 +148,7 @@
         var tok =  context.createToken("symbol", value, context.reader.getLine(), context.reader.getColumn());
         context.reader.read(value.length - 1);
         return tok;
-      },
-
+      }
     ],
 
   caseInsensitive: false,
